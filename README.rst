@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-#########################
-ts_auxtel_standardscripts
-#########################
-
-
-
-.. Add a brief (few sentence) description of what this package provides.
-=======
 ##################
 ts_auxtel_standardscripts
 ##################
@@ -21,4 +12,3 @@ To enable this:
 
 * Run ``pre-commit install`` once.
 * If directed, run ``git config --unset-all core.hooksPath`` once.
->>>>>>> lsst-ts/ts_standardscripts/tickets/DM-48003
