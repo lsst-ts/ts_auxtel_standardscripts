@@ -53,6 +53,7 @@ class HomeDome(salobj.BaseScript):
     async def configure(self, config):
         if self.atcs is None:
             self.atcs = ATCS(domain=self.domain, log=self.log)
+            await self.atcs.start_task
 
     def set_metadata(self, metadata):
         metadata.duration = 300.0
