@@ -27,6 +27,7 @@ import unittest
 
 import pytest
 from lsst.ts.auxtel.standardscripts.daytime_checkout import LatissCheckout
+from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
 from lsst.ts.standardscripts import BaseScriptTestCase
 
 
@@ -41,6 +42,11 @@ class TestLatissCheckout(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
     async def basic_make_script(self, index):
         self.script = LatissCheckout(index=index, add_remotes=False)
+        self.script.latiss = LATISS(
+            domain=self.script.domain,
+            intended_usage=LATISSUsages.DryTest,
+            log=self.script.log,
+        )
 
         return (self.script,)
 
