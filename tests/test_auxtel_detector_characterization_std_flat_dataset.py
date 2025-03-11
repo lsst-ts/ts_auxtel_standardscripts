@@ -43,9 +43,13 @@ class TestATGetStdFlatDataset(
         self.script = ATGetStdFlatDataset(index=index)
 
         # Adds controller to Test
+        await self.script.start_task
         self.at_cam = salobj.Controller(name="ATCamera")
+        await self.at_cam.start_task
         self.at_spec = salobj.Controller(name="ATSpectrograph")
+        await self.at_spec.start_task
         self.at_headerservice = salobj.Controller(name="ATHeaderService")
+        await self.at_headerservice.start_task
 
         self.n_bias = 0
         self.n_dark = 0
