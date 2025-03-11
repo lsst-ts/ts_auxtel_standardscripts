@@ -27,6 +27,7 @@ import pytest
 from lsst.ts import salobj
 from lsst.ts.auxtel.standardscripts import OffsetATAOS
 from lsst.ts.idl.enums.Script import ScriptState
+from lsst.ts.observatory.control.auxtel import ATCS, ATCSUsages
 from lsst.ts.standardscripts import BaseScriptTestCase
 
 
@@ -37,6 +38,11 @@ class TestOffsetATAOS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
 
     async def basic_make_script(self, index):
         self.script = OffsetATAOS(index=index, add_remotes=False)
+        self.script.atcs = ATCS(
+            domain=self.script.domain,
+            intended_usage=ATCSUsages.DryTest,
+            log=self.script.log,
+        )
 
         return (self.script,)
 
