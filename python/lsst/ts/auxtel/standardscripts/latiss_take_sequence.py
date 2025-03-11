@@ -28,7 +28,7 @@ import astropy.units
 import yaml
 from astropy.coordinates import ICRS, Angle
 from lsst.ts import salobj
-from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSUsages
+from lsst.ts.observatory.control.auxtel import ATCS, LATISS
 from lsst.ts.standardscripts.utils import format_as_list
 from lsst.ts.xml.enums.Script import (
     MetadataCoordSys,
@@ -64,17 +64,8 @@ class LatissTakeSequence(salobj.BaseScript):
             descr="Perform a sequence of images with LATISS.",
         )
 
-        latiss_usage = None if add_remotes else LATISSUsages.DryTest
-
-        atcs_usage = None if add_remotes else ATCSUsages.DryTest
-
-        self.atcs = ATCS(domain=self.domain, intended_usage=atcs_usage, log=self.log)
-        self.latiss = LATISS(
-            domain=self.domain,
-            intended_usage=latiss_usage,
-            log=self.log,
-            tcs_ready_to_take_data=self.atcs.ready_to_take_data,
-        )
+        self.atcs = None
+        self.latiss = None
 
         self.run_started = False
 
@@ -170,6 +161,17 @@ class LatissTakeSequence(salobj.BaseScript):
         config : `types.SimpleNamespace`
             Script configuration, as defined by `schema`.
         """
+
+        if self.atcs is None:
+            self.atcs = ATCS(domain=self.domain, log=self.log)
+
+        if self.latiss is None:
+
+            self.latiss = LATISS(
+                domain=self.domain,
+                log=self.log,
+                tcs_ready_to_take_data=self.atcs.ready_to_take_data,
+            )
 
         # make a list of tuples from the filter, exptime and grating lists
         _recurrences = (
