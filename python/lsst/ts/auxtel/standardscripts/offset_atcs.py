@@ -21,7 +21,7 @@
 
 __all__ = ["OffsetATCS"]
 
-from lsst.ts.observatory.control.auxtel import ATCS, ATCSUsages
+from lsst.ts.observatory.control.auxtel import ATCS
 from lsst.ts.standardscripts.base_offset_tcs import BaseOffsetTCS
 
 
@@ -40,9 +40,15 @@ class OffsetATCS(BaseOffsetTCS):
             descr="Perform an ATCS offset",
         )
 
-        atcs_usage = None if add_remotes else ATCSUsages.DryTest
+        self.atcs = None
 
-        self.atcs = ATCS(domain=self.domain, intended_usage=atcs_usage, log=self.log)
+    async def configure(self, config):
+
+        if self.atcs is None:
+            self.atcs = ATCS(domain=self.domain, log=self.log)
+            await self.atcs.start_task
+
+        await super().configure(config=config)
 
     @property
     def tcs(self):
