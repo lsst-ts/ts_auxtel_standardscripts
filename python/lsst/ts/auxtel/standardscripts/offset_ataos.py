@@ -23,7 +23,7 @@ __all__ = ["OffsetATAOS"]
 
 import yaml
 from lsst.ts import salobj
-from lsst.ts.observatory.control.auxtel import ATCS, ATCSUsages
+from lsst.ts.observatory.control.auxtel import ATCS
 
 
 class OffsetATAOS(salobj.BaseScript):
@@ -52,10 +52,7 @@ class OffsetATAOS(salobj.BaseScript):
             index=index,
             descr="Perform an ATCS offset",
         )
-
-        atcs_usage = None if add_remotes else ATCSUsages.DryTest
-
-        self.atcs = ATCS(domain=self.domain, intended_usage=atcs_usage, log=self.log)
+        self.atcs = None
 
     @classmethod
     def get_schema(cls):
@@ -126,6 +123,9 @@ class OffsetATAOS(salobj.BaseScript):
         config : `types.SimpleNamespace`
             Script configuration, as defined by `schema`.
         """
+        if self.atcs is None:
+            self.atcs = ATCS(domain=self.domain, log=self.log)
+            await self.atcs.start_task
 
         self.reset_offsets = getattr(config, "reset_offsets", None)
 
