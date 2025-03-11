@@ -27,6 +27,7 @@ import unittest
 import pytest
 from lsst.ts import salobj
 from lsst.ts.auxtel.standardscripts import LatissTakeSequence
+from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSUsages
 from lsst.ts.standardscripts import BaseScriptTestCase
 
 
@@ -43,6 +44,12 @@ class TestLatissTakeSequence(BaseScriptTestCase, unittest.IsolatedAsyncioTestCas
 
     async def basic_make_script(self, index):
         self.script = LatissTakeSequence(index=index, add_remotes=False)
+        self.script.latiss = LATISS(
+            domain=self.script.domain, intended_usage=LATISSUsages.DryTest
+        )
+        self.script.atcs = ATCS(
+            domain=self.script.domain, intended_usage=ATCSUsages.DryTest
+        )
 
         self.end_image_tasks = []
 

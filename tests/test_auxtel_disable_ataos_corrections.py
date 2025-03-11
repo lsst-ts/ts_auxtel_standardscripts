@@ -22,10 +22,11 @@
 import logging
 import random
 import unittest
+from unittest.mock import AsyncMock
 
 from lsst.ts import standardscripts
 from lsst.ts.auxtel.standardscripts import DisableATAOSCorrections
-from lsst.ts.observatory.control.mock import ATCSMock
+from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 
@@ -38,9 +39,12 @@ class TestDisableATAOSCorrections(
 
     async def basic_make_script(self, index):
         self.script = DisableATAOSCorrections(index=index)
-        self.atcs_mock = ATCSMock()
-
-        return (self.script, self.atcs_mock)
+        self.script.atcs = ATCS(
+            domain=self.script.domain, intended_usage=ATCSUsages.DryTest
+        )
+        self.script.atcs.assert_all_enabled = AsyncMock()
+        self.script.atcs.disable_ataos_corrections = AsyncMock()
+        return (self.script,)
 
     async def test_configure_ignore(self):
         async with self.make_script():
@@ -74,24 +78,10 @@ class TestDisableATAOSCorrections(
     async def test_run(self):
         async with self.make_script():
             await self.configure_script()
-            await self.script.atcs.enable()
 
             await self.run_script()
-            # TODO: Find a way to get the list of corrections for ATAOS to
-            #       avoid hardcoding.
-            ataos_corrections = [
-                "m1",
-                "m2",
-                "hexapod",
-                "focus",
-                "atspectrograph",
-                "moveWhileExposing",
-            ]
-            # Check that all corrections are disabled.
-            for correction in ataos_corrections:
-                assert not getattr(
-                    self.atcs_mock.ataos.evt_correctionEnabled.data, correction
-                )
+            self.script.atcs.assert_all_enabled.assert_awaited()
+            self.script.atcs.disable_ataos_corrections.assert_awaited()
 
 
 if __name__ == "__main__":

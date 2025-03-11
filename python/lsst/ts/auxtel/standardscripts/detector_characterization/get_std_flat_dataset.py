@@ -61,9 +61,9 @@ class ATGetStdFlatDataset(salobj.BaseScript):
             index=index, descr="Take Flat field sensor characterization data."
         )
 
-        self.latiss = LATISS(self.domain, intended_usage=LATISSUsages.TakeImageFull)
+        self.latiss = None
 
-        self.read_out_time = self.latiss.read_out_time
+        self.read_out_time = 2.0
         self.cmd_timeout = 30.0
         self.end_readout_timeout = 120.0
 
@@ -164,6 +164,11 @@ class ATGetStdFlatDataset(salobj.BaseScript):
         config : `types.SimpleNamespace`
             Script configuration, as defined by `schema`.
         """
+        if self.latiss is None:
+            self.latiss = LATISS(
+                self.domain, intended_usage=LATISSUsages.TakeImageFull, log=self.log
+            )
+            await self.latiss.start_task
         self.config = config
         self.flat_exp_times = self.config.flat_base_exptime * np.array(
             self.config.flat_dn_range, dtype=float

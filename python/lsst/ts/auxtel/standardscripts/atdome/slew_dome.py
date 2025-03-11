@@ -82,6 +82,7 @@ class SlewDome(salobj.BaseScript):
 
         if self.atcs is None:
             self.atcs = ATCS(domain=self.domain, log=self.log)
+            await self.atcs.start_task
 
     def set_metadata(self, metadata):
         metadata.duration = 60.0
