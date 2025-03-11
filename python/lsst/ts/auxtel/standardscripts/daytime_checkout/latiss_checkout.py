@@ -24,7 +24,7 @@ __all__ = ["LatissCheckout"]
 import asyncio
 
 from lsst.ts import salobj
-from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
+from lsst.ts.observatory.control.auxtel.latiss import LATISS
 from lsst.ts.standardscripts.utils import get_topic_time_utc
 
 STD_TIMEOUT = 10  # seconds
@@ -67,15 +67,11 @@ class LatissCheckout(salobj.BaseScript):
             descr="Execute daytime checkout of LATISS.",
         )
 
-        latiss_usage = None if add_remotes else LATISSUsages.DryTest
-
         # Instantiate latiss. We need to do this after the call to
         # super().__init__() above. We can also pass in the script domain and
         # logger to both classes so log messages generated internally are
         # published to the efd.
-        self.latiss = LATISS(
-            domain=self.domain, intended_usage=latiss_usage, log=self.log
-        )
+        self.latiss = None
 
         self.linear_stage_nominal_position = 67.0
 
@@ -85,6 +81,9 @@ class LatissCheckout(salobj.BaseScript):
 
     async def configure(self, config):
         # This script does not require any configuration
+        if self.latiss is None:
+            self.latiss = LATISS(domain=self.domain, log=self.log)
+            await self.latiss.start_task
         self.program = "BLOCK-T17"
 
     def set_metadata(self, metadata):
