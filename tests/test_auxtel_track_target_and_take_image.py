@@ -115,6 +115,7 @@ class TestAuxTelTrackTargetAndTakeImage(
                     filter=configuration_full["band_filter"],
                     reason=configuration_full["reason"],
                     program=configuration_full["program"],
+                    note=configuration_full["note"],
                 )
                 for exptime in configuration_full["exp_times"]
             ]
@@ -154,6 +155,7 @@ class TestAuxTelTrackTargetAndTakeImage(
                     group_id=self.script.group_id,
                     reason=configuration_std_visit["reason"],
                     program=configuration_std_visit["program"],
+                    note=configuration_std_visit["note"],
                 )
             ]
 
@@ -196,6 +198,7 @@ class TestAuxTelTrackTargetAndTakeImage(
                     filter=band_filter,
                     reason=configuration_full["reason"],
                     program=configuration_full["program"],
+                    note=configuration_full["note"],
                 )
                 for exptime, grating, band_filter in zip(
                     configuration_full["exp_times"],
@@ -304,7 +307,8 @@ class TestAuxTelTrackTargetAndTakeImage(
                     filter=configuration_full["band_filter"],
                     reason=configuration_full["reason"],
                     program=configuration_full["program"],
-                ),
+                    note=configuration_full["note"],
+                )
             ]
 
             self.script.latiss.take_object.assert_has_awaits(latiss_take_object_calls)
@@ -390,6 +394,7 @@ class TestAuxTelTrackTargetAndTakeImage(
             grating=grating,
             reason="Unit testing",
             program="UTEST",
+            note="Note_utest",
         )
 
         await self.configure_script(**configuration_full)
@@ -411,6 +416,7 @@ class TestAuxTelTrackTargetAndTakeImage(
             grating=grating,
             reason="Unit testing",
             program="UTEST",
+            note="Note_utest",
         )
 
         await self.configure_script(**configuration_std_visit)
@@ -438,6 +444,7 @@ class TestAuxTelTrackTargetAndTakeImage(
         group_id=None,
         reason=None,
         program=None,
+        note=None,
     ):
         self.log.debug(
             f"exptime: {exptime}s, "
@@ -448,6 +455,7 @@ class TestAuxTelTrackTargetAndTakeImage(
             f"group_id: {group_id}, "
             f"reason: {reason}, "
             f"program: {program}"
+            f"note: {note}"
         )
         await asyncio.sleep(exptime * n)
 
