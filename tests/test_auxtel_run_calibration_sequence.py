@@ -57,3 +57,73 @@ class TestRunCalibrationSequence(BaseScriptTestCase, unittest.IsolatedAsyncioTes
         async with self.make_script():
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script()
+
+    async def test_exposure_log_error_tracking(self):
+        async with self.make_script():
+            # Configure the script
+            await self.configure_script(sequence_name="at_whitelight_r")
+
+            error_atcalsys = ATCalsys(
+                domain=self.script.domain,
+                log=self.script.log,
+                intended_usage=ATCalsysUsages.DryTest,
+            )
+
+            error_atcalsys.prepare_for_flat = unittest.mock.AsyncMock()
+
+            async def mock_run_sequence(*args, **kwargs):
+                await error_atcalsys.exposure_log.add_entry(
+                    "exposure_1",
+                    {
+                        "wavelength": 650.0,
+                        "status": "success",
+                        "electrometer_status": "success",
+                        "fiber_spectrum_status": "success",
+                    },
+                )
+                await error_atcalsys.exposure_log.add_entry(
+                    "exposure_2",
+                    {
+                        "wavelength": 660.0,
+                        "status": "failed",
+                        "error_message": "Failed to take exposure",
+                        "electrometer_status": "timeout",
+                        "electrometer_error_message": "AckTimeoutError: Command timed out",
+                    },
+                )
+
+                return {
+                    "sequence_name": "at_whitelight_r",
+                    "steps": [
+                        {"wavelength": 650.0, "latiss_exposure_info": {"exp1": {}}},
+                        {"wavelength": 660.0, "latiss_exposure_info": {}},
+                    ],
+                }
+
+            error_atcalsys.run_calibration_sequence = mock_run_sequence
+
+            self.script.atcalsys = error_atcalsys
+
+            self.script.publish_sequence_summary = unittest.mock.AsyncMock()
+
+            await self.script.run_block()
+
+            assert "exposure_log" in self.script.sequence_summary
+            assert len(self.script.sequence_summary["exposure_log"]) == 2
+
+            success_entry = next(
+                entry
+                for entry in self.script.sequence_summary["exposure_log"]
+                if entry["exposure_id"] == "exposure_1"
+            )
+            assert success_entry["status"] == "success"
+
+            error_entry = next(
+                entry
+                for entry in self.script.sequence_summary["exposure_log"]
+                if entry["exposure_id"] == "exposure_2"
+            )
+            assert error_entry["status"] == "failed"
+            assert "error_message" in error_entry
+            assert error_entry["electrometer_status"] == "timeout"
+            assert "AckTimeoutError" in error_entry["electrometer_error_message"]
