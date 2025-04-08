@@ -164,6 +164,7 @@ class LatissTakeSequence(salobj.BaseScript):
 
         if self.atcs is None:
             self.atcs = ATCS(domain=self.domain, log=self.log)
+            await self.atcs.start_task
 
         if self.latiss is None:
 
@@ -172,6 +173,7 @@ class LatissTakeSequence(salobj.BaseScript):
                 log=self.log,
                 tcs_ready_to_take_data=self.atcs.ready_to_take_data,
             )
+            await self.latiss.start_task
 
         # make a list of tuples from the filter, exptime and grating lists
         _recurrences = (
