@@ -1,0 +1,1 @@
+ Define ``tcs`` property in ``TakeImageLatiss``
