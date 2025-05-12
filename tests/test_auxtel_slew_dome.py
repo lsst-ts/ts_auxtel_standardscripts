@@ -24,8 +24,8 @@ import unittest
 import pytest
 from lsst.ts import salobj, standardscripts
 from lsst.ts.auxtel.standardscripts.atdome import SlewDome
-from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.mock import ATCSMock
+from lsst.ts.xml.enums.Script import ScriptState
 
 
 class TestSlewDome(
