@@ -27,7 +27,7 @@ import unittest
 
 from lsst.ts import salobj, standardscripts, utils
 from lsst.ts.auxtel.standardscripts.calibrations import PowerOnATCalSys
-from lsst.ts.idl.enums import ATMonochromator, ATWhiteLight
+from lsst.ts.xml.enums import ATMonochromator, ATWhiteLight
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 

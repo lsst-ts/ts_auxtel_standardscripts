@@ -24,9 +24,9 @@ __all__ = ["TelescopeAndDomeCheckout"]
 import asyncio
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
 from lsst.ts.observatory.control.utils.enums import RotType
+from lsst.ts.xml.enums.Script import ScriptState
 
 STD_TIMEOUT = 10  # seconds
 

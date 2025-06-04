@@ -26,7 +26,7 @@ import time as time
 
 import yaml
 from lsst.ts import salobj
-from lsst.ts.idl.enums import ATWhiteLight
+from lsst.ts.xml.enums import ATWhiteLight
 
 
 class PowerOnATCalSys(salobj.BaseScript):
