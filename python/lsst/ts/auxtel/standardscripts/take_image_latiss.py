@@ -64,6 +64,10 @@ class TakeImageLatiss(BaseTakeImage):
     def camera(self):
         return self._latiss
 
+    @staticmethod
+    def get_available_imgtypes():
+        return LATISS.get_image_types()
+
     @classmethod
     def get_schema(cls):
         schema_yaml = """
