@@ -185,6 +185,7 @@ additionalProperties: false
                 group_id=self.group_id,
                 reason=self.config.reason,
                 program=self.config.program,
+                note=self.note,
             )
 
         else:
@@ -203,6 +204,7 @@ additionalProperties: false
                     grating=grating,
                     reason=self.config.reason,
                     program=self.config.program,
+                    note=self.note,
                 )
 
     async def stop_tracking(self):

@@ -24,7 +24,7 @@ __all__ = ["PowerOffATCalSys"]
 import asyncio
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums import ATWhiteLight
+from lsst.ts.xml.enums import ATWhiteLight
 
 
 class PowerOffATCalSys(salobj.BaseScript):

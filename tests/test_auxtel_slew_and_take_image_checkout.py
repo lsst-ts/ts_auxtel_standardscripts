@@ -27,8 +27,8 @@ import unittest
 
 import pytest
 from lsst.ts.auxtel.standardscripts.daytime_checkout import SlewAndTakeImageCheckout
-from lsst.ts.idl.enums.ATMCS import M3State
 from lsst.ts.standardscripts import BaseScriptTestCase
+from lsst.ts.xml.enums.ATMCS import M3State
 
 
 class TestSlewAndTakeImageCheckout(

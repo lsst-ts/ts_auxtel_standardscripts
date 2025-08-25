@@ -24,8 +24,8 @@ __all__ = ["ATPneumaticsCheckout"]
 import asyncio
 
 from lsst.ts import salobj
-from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.auxtel.atcs import ATCS
+from lsst.ts.xml.enums.Script import ScriptState
 
 STD_TIMEOUT = 5  # seconds
 

@@ -48,6 +48,18 @@ class PointAzEl(BasePointAzEl):
     def tcs(self):
         return self.atcs
 
+    async def get_current_azimuth(self):
+        tel_pos = await self.atcs.next_telescope_position(
+            timeout=self.atcs.fast_timeout
+        )
+        return tel_pos.azimuthCalculatedAngle[-1]
+
+    async def get_current_elevation(self):
+        tel_pos = await self.atcs.next_telescope_position(
+            timeout=self.atcs.fast_timeout
+        )
+        return tel_pos.elevationCalculatedAngle[-1]
+
     async def configure_tcs(self):
         """Handle creating ATCS object and waiting for remote to start."""
 

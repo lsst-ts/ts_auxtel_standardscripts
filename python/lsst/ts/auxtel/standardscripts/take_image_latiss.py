@@ -57,6 +57,10 @@ class TakeImageLatiss(BaseTakeImage):
         self.instrument_name = "LATISS"
 
     @property
+    def tcs(self):
+        return self.atcs
+
+    @property
     def camera(self):
         return self._latiss
 

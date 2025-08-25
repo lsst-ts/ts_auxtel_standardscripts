@@ -1,0 +1,1 @@
+In prepare_for/onsky.py, add sequense of 3 biases to clear LATISS CCD charge.
