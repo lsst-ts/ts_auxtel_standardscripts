@@ -1,1 +1,0 @@
-In latiss_take_sequence.py, add await to start_task when creating LATISS and ATCS.

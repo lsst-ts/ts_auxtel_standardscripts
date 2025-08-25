@@ -8,6 +8,35 @@ Version History
 
 .. towncrier release notes start
 
+v0.2.0 (2025-08-25)
+===================
+
+New Features
+------------
+
+- Define ``tcs`` property in ``TakeImageLatiss`` (`DM-49502 <https://rubinobs.atlassian.net/browse/DM-49502>`_)
+- In ``track_target_and_take_image.py`` script, pass ``note`` option through to ``take_object`` call and update unit tests. (`DM-49700 <https://rubinobs.atlassian.net/browse/DM-49700>`_)
+- Allow ``point_azel.py`` script to receive only one axis. (`DM-51170 <https://rubinobs.atlassian.net/browse/DM-51170>`_)
+
+
+Bug Fixes
+---------
+
+- In latiss_take_sequence.py, add await to start_task when creating LATISS and ATCS. (`DM-49683 <https://rubinobs.atlassian.net/browse/DM-49683>`_)
+
+
+API Removal or Deprecation
+--------------------------
+
+- Remove dependencies on ``lsst.ts.idl`` from all scripts and tests, and use ``lsst.ts.xml`` instead. (`DM-50775 <https://rubinobs.atlassian.net/browse/DM-50775>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- In prepare_for/onsky.py, add sequense of 3 biases to clear LATISS CCD charge. (`DM-51639 <https://rubinobs.atlassian.net/browse/DM-51639>`_)
+
+
 v0.1.0 (2025-03-11)
 ===================
 
