@@ -1,0 +1,1 @@
+Add ``get_available_imgtypes`` implementation to ``TakeImageLatiss``.
