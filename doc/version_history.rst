@@ -8,6 +8,15 @@ Version History
 
 .. towncrier release notes start
 
+v0.3.0 (2025-10-20)
+===================
+
+New Features
+------------
+
+- Add ``get_available_imgtypes`` implementation to ``TakeImageLatiss``. (`DM-51409 <https://rubinobs.atlassian.net/browse/DM-51409>`_)
+
+
 v0.2.0 (2025-08-25)
 ===================
 
