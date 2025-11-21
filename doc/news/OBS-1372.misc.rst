@@ -1,0 +1,1 @@
+In daytime_checkout/slew_and_take_image_checkout.py, add check that the ATMCS is publishing its target position and the ATPtg receives it.
