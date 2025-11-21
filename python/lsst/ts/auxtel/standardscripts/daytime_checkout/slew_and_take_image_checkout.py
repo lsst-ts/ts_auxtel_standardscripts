@@ -104,6 +104,16 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
 
         metadata.duration = 410
 
+    async def log_current_position(self):
+        current_position = await self.atcs.rem.atptg.tel_mountPositions.aget(
+            timeout=self.atcs.long_timeout
+        )
+
+        current_azimuth = current_position.azimuthCalculatedAngle[0]
+        current_elevation = current_position.elevationCalculatedAngle[0]
+
+        self.log.info(f"{current_azimuth=:0.3f} deg, {current_elevation=:0.3f} deg")
+
     async def run(self):
         await self.assert_feasibility()
 
@@ -143,6 +153,18 @@ class SlewAndTakeImageCheckout(salobj.BaseScript):
             rot_type=RotType.PhysicalSky,
             target_name="DaytimeCheckout001",
         )
+
+        # Check that the mount is publishing the updated position and the ATPtg
+        # receives it.
+        try:
+            await self.log_current_position()
+
+        except asyncio.TimeoutError:
+            raise RuntimeError(
+                "Timeout waiting for the ATMCS mount position event. This "
+                "usually means there is an issue with communication between the"
+                "ATMCS and ATPtg CSCs."
+            )
 
         # Take an Engineering test frame and verify ingestion at OODS
         await self.checkpoint("Slew and take image 1/2")
