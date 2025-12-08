@@ -150,7 +150,7 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             )
             self.script.configure_tcs.assert_awaited_once()
 
-    async def test_run_azel(self):
+    async def test_run_azel_simultaneous(self):
         async with self.make_dry_script():
             self.script.get_obs_id = unittest.mock.AsyncMock(
                 side_effect=["202306060001"]
@@ -164,6 +164,7 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             slew_timeout = 240.0
             program = "BLOCK-123"
             reason = "SITCOM-321"
+            slew_sequentially = False
 
             await self.configure_script(
                 az=az,
@@ -174,6 +175,7 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
                 slew_timeout=slew_timeout,
                 program=program,
                 reason=reason,
+                slew_sequentially=slew_sequentially,
             )
 
             await self.run_script()
@@ -189,6 +191,66 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
                 wait_dome=wait_dome,
                 slew_timeout=slew_timeout,
             )
+
+    async def test_run_azel_sequential_default(self):
+        async with self.make_dry_script():
+            az = 45.0
+            el = 70.0
+            rot_tel = 0.0
+            target_name = "sequential_test"
+            wait_dome = False
+            slew_timeout = 240.0
+
+            await self.configure_script(
+                az=az,
+                el=el,
+                rot_tel=rot_tel,
+                target_name=target_name,
+                wait_dome=wait_dome,
+                slew_timeout=slew_timeout,
+            )
+
+            await self.run_script()
+
+            assert self.script.atcs.point_azel.await_count == 2
+
+            first_call = self.script.atcs.point_azel.await_args_list[0]
+            assert first_call.kwargs["az"] == az
+            assert first_call.kwargs["el"] == self.current_elevation
+            assert first_call.kwargs["rot_tel"] == rot_tel
+
+            second_call = self.script.atcs.point_azel.await_args_list[1]
+            assert second_call.kwargs["az"] == az
+            assert second_call.kwargs["el"] == el
+            assert second_call.kwargs["rot_tel"] == rot_tel
+
+    async def test_run_azel_sequential_explicit(self):
+        async with self.make_dry_script():
+            az = 180.0
+            el = 60.0
+            rot_tel = 10.0
+            target_name = "sequential_explicit"
+            slew_sequentially = True
+
+            await self.configure_script(
+                az=az,
+                el=el,
+                rot_tel=rot_tel,
+                target_name=target_name,
+                slew_sequentially=slew_sequentially,
+            )
+
+            await self.run_script()
+
+            assert self.script.atcs.point_azel.await_count == 2
+
+            first_call = self.script.atcs.point_azel.await_args_list[0]
+            assert first_call.kwargs["az"] == az
+            assert first_call.kwargs["el"] == self.current_elevation
+
+            second_call = self.script.atcs.point_azel.await_args_list[1]
+            assert second_call.kwargs["az"] == az
+            assert second_call.kwargs["el"] == el
 
     async def test_run_point_azel_fails(self):
         async with self.make_dry_script():
