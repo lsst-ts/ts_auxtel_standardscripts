@@ -85,6 +85,8 @@ class TestSlewAndTakeImageCheckout(
         self.script.atcs.close_m1_cover = unittest.mock.AsyncMock()
         self.script.atcs.close_m1_vent = unittest.mock.AsyncMock()
 
+        self.script.log_current_position = unittest.mock.AsyncMock()
+
         self.script.latiss.take_engtest = unittest.mock.AsyncMock()
         self.script.latiss.get_setup = unittest.mock.AsyncMock(
             side_effect=self.get_latiss_setup
@@ -95,7 +97,8 @@ class TestSlewAndTakeImageCheckout(
             **{"evt_imageInOODS.next.side_effect": self.get_atoods_ingest_event}
         )
         self.script.atcs.rem = types.SimpleNamespace(
-            ataos=unittest.mock.AsyncMock(), atmcs=unittest.mock.AsyncMock()
+            ataos=unittest.mock.AsyncMock(),
+            atmcs=unittest.mock.AsyncMock(),
         )
         self.script.atcs.rem.ataos.configure_mock(
             **{
