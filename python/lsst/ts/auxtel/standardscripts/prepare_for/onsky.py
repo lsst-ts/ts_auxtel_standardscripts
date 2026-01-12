@@ -80,7 +80,7 @@ class PrepareForOnSky(salobj.BaseScript):
 
         if self.latiss is None:
             self.latiss = LATISS(
-                self.domain, intended_usage=LATISSUsages.StateTransition, log=self.log
+                self.domain, intended_usage=LATISSUsages.TakeImage, log=self.log
             )
             await self.latiss.start_task
 
@@ -98,4 +98,11 @@ class PrepareForOnSky(salobj.BaseScript):
         await self.latiss.assert_all_enabled(
             message="All LATISS components need to be enabled to prepare for sky observations."
         )
+
+        await self.latiss.take_bias(
+            nbias=3,
+            program="prepare_for_onsky",
+            reason="bias_ccd_clear",
+        )
+
         await self.atcs.prepare_for_onsky()

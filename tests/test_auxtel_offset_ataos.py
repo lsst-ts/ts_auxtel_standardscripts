@@ -26,9 +26,9 @@ import unittest
 import pytest
 from lsst.ts import salobj
 from lsst.ts.auxtel.standardscripts import OffsetATAOS
-from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.auxtel import ATCS, ATCSUsages
 from lsst.ts.standardscripts import BaseScriptTestCase
+from lsst.ts.xml.enums.Script import ScriptState
 
 
 class TestOffsetATAOS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):

@@ -25,9 +25,9 @@ import unittest
 import pytest
 from lsst.ts import salobj
 from lsst.ts.auxtel.standardscripts import OffsetATCS
-from lsst.ts.idl.enums.Script import ScriptState
 from lsst.ts.observatory.control.auxtel import ATCS, ATCSUsages
 from lsst.ts.standardscripts import BaseScriptTestCase
+from lsst.ts.xml.enums.Script import ScriptState
 
 
 class TestOffsetATCS(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):

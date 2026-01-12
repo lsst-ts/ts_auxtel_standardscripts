@@ -27,7 +27,7 @@ import unittest
 
 from lsst.ts import salobj, standardscripts, utils
 from lsst.ts.auxtel.standardscripts.calibrations import PowerOffATCalSys
-from lsst.ts.idl.enums import ATWhiteLight
+from lsst.ts.xml.enums import ATWhiteLight
 
 random.seed(47)  # for set_random_lsst_dds_partition_prefix
 

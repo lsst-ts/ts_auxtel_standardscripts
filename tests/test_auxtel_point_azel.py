@@ -22,6 +22,7 @@
 import contextlib
 import unittest
 
+import numpy as np
 import pytest
 from lsst.ts import salobj
 from lsst.ts.auxtel.standardscripts import PointAzEl
@@ -31,6 +32,8 @@ from lsst.ts.standardscripts import BaseScriptTestCase
 class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
     async def basic_make_script(self, index):
         self.script = PointAzEl(index=index)
+        self.current_azimuth = 90.0
+        self.current_elevation = 45.0
 
         return (self.script,)
 
@@ -44,32 +47,47 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             self.script.atcs.point_azel = unittest.mock.AsyncMock()
             self.script.atcs.stop_tracking = unittest.mock.AsyncMock()
             self.script.atcs.disable_checks_for_components = unittest.mock.Mock()
+            self.script.atcs.configure_mock(
+                **{
+                    "next_telescope_position.return_value": unittest.mock.Mock(
+                        azimuthCalculatedAngle=np.array(
+                            [0.0] * 99 + [self.current_azimuth]
+                        ),
+                        elevationCalculatedAngle=np.array(
+                            [0.0] * 99 + [self.current_elevation]
+                        ),
+                    ),
+                }
+            )
             self.script.configure_tcs = unittest.mock.AsyncMock()
 
             yield
+
+    async def test_config_az_no_el(self) -> None:
+        async with self.make_dry_script():
+            await self.configure_script(az=0.0)
+
+        self.script.configure_tcs.assert_awaited_once()
+        self.script.atcs.next_telescope_position.awaited_once()
+
+        assert self.script.config.az == 0.0
+        assert self.script.config.el == self.current_elevation
+
+    async def test_config_el_no_az(self) -> None:
+        async with self.make_dry_script():
+            await self.configure_script(el=0.0)
+
+        self.script.configure_tcs.assert_awaited_once()
+        self.script.atcs.next_telescope_position.awaited_once()
+
+        assert self.script.config.az == self.current_azimuth
+        assert self.script.config.el == 0.0
 
     async def test_config_fail_no_defaults(self) -> None:
         async with self.make_dry_script():
             with pytest.raises(salobj.ExpectedError):
                 await self.configure_script()
 
-            self.script.configure_tcs.assert_not_called()
-
-    async def test_config_fail_az_no_el(self) -> None:
-        async with self.make_dry_script():
-            with pytest.raises(
-                salobj.ExpectedError, match="'el' is a required property"
-            ):
-                await self.configure_script(az=0.0)
-
-            self.script.configure_tcs.assert_not_called()
-
-    async def test_config_fail_el_no_az(self) -> None:
-        async with self.make_dry_script():
-            with pytest.raises(
-                salobj.ExpectedError, match="'az' is a required property"
-            ):
-                await self.configure_script(el=0.0)
             self.script.configure_tcs.assert_not_called()
 
     async def test_configure_fail_invalid_el_min(self):
