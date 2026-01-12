@@ -8,6 +8,15 @@ Version History
 
 .. towncrier release notes start
 
+0.3.1 (2026-01-12)
+==================
+
+Other Changes and Additions
+---------------------------
+
+- In daytime_checkout/slew_and_take_image_checkout.py, add check that the ATMCS is publishing its target position and the ATPtg receives it. (`OBS-1372 <https://rubinobs.atlassian.net/browse/OBS-1372>`_)
+
+
 v0.3.0 (2025-10-20)
 ===================
 
