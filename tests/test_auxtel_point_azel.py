@@ -164,6 +164,7 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
             slew_timeout = 240.0
             program = "BLOCK-123"
             reason = "SITCOM-321"
+            slew_sequentially = False
 
             await self.configure_script(
                 az=az,
@@ -174,6 +175,7 @@ class TestPointAzEl(BaseScriptTestCase, unittest.IsolatedAsyncioTestCase):
                 slew_timeout=slew_timeout,
                 program=program,
                 reason=reason,
+                slew_sequentially=slew_sequentially,
             )
 
             await self.run_script()

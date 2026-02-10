@@ -160,6 +160,9 @@ class TelescopeAndDomeCheckout(salobj.BaseScript):
             wait_dome=False,
         )
 
+        # Ensure tracking is stopped
+        await self.atcs.stop_tracking()
+
         # Slew Dome to park position
         await self.atcs.slew_dome_to(az=self.atcs.dome_park_az)
 

@@ -201,6 +201,9 @@ class ATPneumaticsCheckout(salobj.BaseScript):
         await self.atcs.close_m1_cover()
         await self.atcs.close_m1_vent()
 
+        # Ensure tracking is stopped
+        await self.atcs.stop_tracking()
+
     async def assert_feasibility(self):
         """Verify that the system is in a feasible state to execute the
         script.
