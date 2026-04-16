@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+from .atvent_start import *
 from .calsys_takedata import *
 from .disable_ataos_corrections import *
 from .enable_ataos_corrections import *
