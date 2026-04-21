@@ -129,7 +129,7 @@ class TelescopeAndDomeCheckout(salobj.BaseScript):
         await self.checkpoint("Slewing Dome...")
 
         # Home the dome
-        await self.atcs.home_dome()
+        await self.atcs.home_dome(force=True)
 
         # Check that Dome Moves
         dome_az = await self.atcs.rem.atdome.tel_position.next(
