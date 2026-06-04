@@ -106,6 +106,11 @@ class TakeImageLatiss(BaseTakeImage):
 
         base_schema_dict = super(TakeImageLatiss, cls).get_schema()
 
+        if "required" in base_schema_dict:
+            schema_dict["required"] = list(
+                set(schema_dict.get("required", [])) | set(base_schema_dict["required"])
+            )
+
         for prop in base_schema_dict["properties"]:
             schema_dict["properties"][prop] = base_schema_dict["properties"][prop]
 
