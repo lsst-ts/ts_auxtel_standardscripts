@@ -8,6 +8,24 @@ Version History
 
 .. towncrier release notes start
 
+v0.3.2 (2026-06-04)
+===================
+
+Bug Fixes
+---------
+
+- Add base schema required field inheritance to derived scripts (`DM-53280 <https://rubinobs.atlassian.net/browse/DM-53280>`_)
+- Update documentation build configuration for documenteer 1.0+. (`DM-53280.2 <https://rubinobs.atlassian.net/browse/DM-53280.2>`_)
+- Update point_azel unit test to include slew_sequentially=False configuration. (`OSW-1805 <https://rubinobs.atlassian.net/browse/OSW-1805>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- In daytime_checkout scripts, ensure tracking is stopped at end of script. (`OSW-1805 <https://rubinobs.atlassian.net/browse/OSW-1805>`_)
+- In ``daytime_checkout/telescope_and_dome_checkout.py``, force home the dome. (`OSW-2207 <https://rubinobs.atlassian.net/browse/OSW-2207>`_)
+
+
 0.3.1 (2026-01-12)
 ==================
 

@@ -1,1 +1,0 @@
-In ``daytime_checkout/telescope_and_dome_checkout.py``, force home the dome.

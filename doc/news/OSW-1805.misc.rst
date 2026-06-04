@@ -1,1 +1,0 @@
-In daytime_checkout scripts, ensure tracking is stopped at end of script.
