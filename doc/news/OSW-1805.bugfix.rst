@@ -1,1 +1,0 @@
-Update point_azel unit test to include slew_sequentially=False configuration.
