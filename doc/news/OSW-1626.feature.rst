@@ -1,0 +1,1 @@
+Added vent gate and extraction fan control to ``PrepareForVent``, and added a vent gate close check to ``PrepareForOnSky``.
