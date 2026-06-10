@@ -22,12 +22,29 @@
 __all__ = ["PrepareForVent"]
 
 import asyncio
+import collections
 import dataclasses
 
 import yaml
 from astroplan import Observer
 from lsst.ts import salobj, utils
+from lsst.ts.observatory.control.auxtel.atbuilding import ATBuilding, ATBuildingUsages
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+
+# ESS SAL index for the outdoor weather station at the AuxTel site.
+ESS_INDEX = 301
+
+# Index of the vent gate to open when wind conditions allow.
+VENT_GATE_INDEX = 3
+
+# Wind speed threshold (m/s) below which the vent gate and fan are activated.
+WIND_SPEED_THRESHOLD = 10.0
+
+# Rolling window (s) over which to average wind speed.
+WIND_AVERAGE_WINDOW = 600.0
+
+# Extraction fan drive frequency (Hz) to use when venting.
+FAN_TARGET_FREQUENCY = 20
 
 
 @dataclasses.dataclass
@@ -44,6 +61,11 @@ class VentConstraints:
 
 class PrepareForVent(salobj.BaseScript):
     """Run prepare for vent on ATCS.
+
+    Optionally opens ATBuilding vent gate 3 and starts the extraction fan at
+    20% of the maximum drive frequency when the 10-minute average wind speed
+    reported by ESS 301 is below 10 m/s.  The fan and gate are closed/stopped
+    at the end of the script or on early termination.
 
     Parameters
     ----------
@@ -63,6 +85,33 @@ class PrepareForVent(salobj.BaseScript):
             log=self.log,
             intended_usage=None if remotes else ATCSUsages.DryTest,
         )
+
+        self.atbuilding = ATBuilding(
+            domain=self.domain,
+            log=self.log,
+            intended_usage=None if remotes else ATBuildingUsages.DryTest,
+        )
+
+        self.ess_remote = (
+            salobj.Remote(
+                domain=self.domain,
+                name="ESS",
+                index=ESS_INDEX,
+                include=["airFlow"],
+            )
+            if remotes
+            else None
+        )
+
+        # Rolling wind-speed history: deque of (speed_m_s, tai_timestamp).
+        self._wind_history: collections.deque = collections.deque()
+
+        # Track whether we opened the gate/fan so cleanup knows what to undo.
+        self._vent_gate_opened = False
+        self._fan_started = False
+        # Set to True when wind forces the gate/fan closed mid-run so we don't
+        # attempt to re-open them.
+        self._vent_closed_due_to_wind = False
 
     @classmethod
     def get_schema(cls):
@@ -85,6 +134,9 @@ class PrepareForVent(salobj.BaseScript):
     async def configure(self, config):
         self.config = config
 
+        if self.ess_remote is not None:
+            self.ess_remote.tel_airFlow.callback = self._air_flow_callback
+
     def set_metadata(self, metadata):
         metadata.duration = self.estimate_duration()
 
@@ -97,28 +149,54 @@ class PrepareForVent(salobj.BaseScript):
 
         await self.prepare_for_vent()
 
+        await self._open_vent_and_fan()
+
         self.log.info(f"Venting until sun reaches {self.config.end_at_sun_elevation}.")
 
-        while sun_el > self.config.end_at_sun_elevation:
-            await self.checkpoint(
-                f"Sun @ {sun_el:.2f} deg [limit={self.config.end_at_sun_elevation}]. "
-            )
-            self.log.debug(f"Waiting {self.track_sun_sleep_time}...")
-            await asyncio.sleep(self.track_sun_sleep_time)
+        try:
+            while sun_el > self.config.end_at_sun_elevation:
+                avg_wind = self._average_wind_speed()
+                wind_str = (
+                    f"avg wind {avg_wind:.2f} m/s"
+                    if avg_wind is not None
+                    else "avg wind unavailable"
+                )
 
-            (
-                tel_vent_azimuth,
-                dome_vent_azimuth,
-            ) = self.atcs.get_telescope_and_dome_vent_azimuth()
+                await self.checkpoint(
+                    f"Sun @ {sun_el:.2f} deg [limit={self.config.end_at_sun_elevation}], "
+                    f"{wind_str} [limit={WIND_SPEED_THRESHOLD} m/s]."
+                )
 
-            self.log.debug(
-                f"Repositioning the telescope and dome: {tel_vent_azimuth=}, {dome_vent_azimuth}."
-            )
+                if (
+                    not self._vent_closed_due_to_wind
+                    and avg_wind is not None
+                    and avg_wind >= WIND_SPEED_THRESHOLD
+                ):
+                    self.log.warning(
+                        f"Average wind speed {avg_wind:.2f} m/s exceeded threshold "
+                        f"{WIND_SPEED_THRESHOLD} m/s. Closing vent gate and fan."
+                    )
+                    await self._close_vent_and_fan()
+                    self._vent_closed_due_to_wind = True
 
-            await self.reposition_telescope_and_dome(
-                tel_vent_azimuth, dome_vent_azimuth
-            )
-            _, sun_el = self.get_sun_azel()
+                self.log.debug(f"Waiting {self.track_sun_sleep_time}...")
+                await asyncio.sleep(self.track_sun_sleep_time)
+
+                (
+                    tel_vent_azimuth,
+                    dome_vent_azimuth,
+                ) = self.atcs.get_telescope_and_dome_vent_azimuth()
+
+                self.log.debug(
+                    f"Repositioning the telescope and dome: {tel_vent_azimuth=}, {dome_vent_azimuth}."
+                )
+
+                await self.reposition_telescope_and_dome(
+                    tel_vent_azimuth, dome_vent_azimuth
+                )
+                _, sun_el = self.get_sun_azel()
+        finally:
+            await self._close_vent_and_fan()
 
     async def reposition_telescope_and_dome(self, tel_vent_azimuth, dome_vent_azimuth):
         try:
@@ -173,6 +251,89 @@ class PrepareForVent(salobj.BaseScript):
                 f"Vent constraints not met. Sun currently @ {sun_az=:.2f},{sun_el=:.2f}. "
                 f"Constraints are {self.vent_constraints!r}."
             )
+
+    async def cleanup(self) -> None:
+        """Close the vent gate and stop the fan if stopped early."""
+        await self._close_vent_and_fan()
+
+    async def _air_flow_callback(self, air_flow: salobj.BaseMsgType) -> None:
+        """Append an ESS airFlow sample to the rolling wind-speed history."""
+        now = air_flow.private_sndStamp
+        self._wind_history.append((air_flow.speed, now))
+
+        # Prune samples older than the averaging window.
+        cutoff = now - WIND_AVERAGE_WINDOW
+        while self._wind_history and self._wind_history[0][1] < cutoff:
+            self._wind_history.popleft()
+
+    def _average_wind_speed(self) -> float | None:
+        """Return the average wind speed (m/s) over the rolling window.
+
+        Returns `None` if no samples have been collected.
+        """
+        if not self._wind_history:
+            return None
+        speeds = [s for s, _ in self._wind_history]
+        return sum(speeds) / len(speeds)
+
+    async def _open_vent_and_fan(self) -> None:
+        """Open vent gate 3 and start the extraction fan if wind allows.
+
+        If the average wind speed is unavailable (no ESS data) the operation
+        is skipped with a warning.
+        """
+        avg_wind = self._average_wind_speed()
+
+        if avg_wind is None:
+            self.log.warning(
+                "No wind speed data available from ESS %d. "
+                "Skipping vent gate and extraction fan activation.",
+                ESS_INDEX,
+            )
+            return
+
+        self.log.info(
+            f"Average wind speed over last {WIND_AVERAGE_WINDOW:.0f} s: "
+            f"{avg_wind:.2f} m/s (threshold {WIND_SPEED_THRESHOLD} m/s)."
+        )
+
+        if avg_wind >= WIND_SPEED_THRESHOLD:
+            self.log.info(
+                "Wind speed at or above threshold. "
+                "Vent gate 3 and extraction fan will not be activated."
+            )
+            return
+
+        self.log.info(
+            f"Opening vent gate {VENT_GATE_INDEX} and starting extraction fan "
+            f"at {FAN_TARGET_FREQUENCY} Hz."
+        )
+
+        await self.atbuilding.open_vent_gates([VENT_GATE_INDEX])
+        self._vent_gate_opened = True
+
+        await self.atbuilding.start_extraction_fan(FAN_TARGET_FREQUENCY)
+        self._fan_started = True
+
+    async def _close_vent_and_fan(self) -> None:
+        """Stop the extraction fan and close vent gate 3 if opened."""
+        if self._fan_started:
+            self.log.info("Stopping extraction fan.")
+            try:
+                await self.atbuilding.stop_extraction_fan()
+            except Exception:
+                self.log.exception("Error stopping extraction fan.")
+            finally:
+                self._fan_started = False
+
+        if self._vent_gate_opened:
+            self.log.info(f"Closing vent gate {VENT_GATE_INDEX}.")
+            try:
+                await self.atbuilding.close_vent_gates([VENT_GATE_INDEX])
+            except Exception:
+                self.log.exception(f"Error closing vent gate {VENT_GATE_INDEX}.")
+            finally:
+                self._vent_gate_opened = False
 
     def estimate_duration(self):
         """Estimate the script duration.
