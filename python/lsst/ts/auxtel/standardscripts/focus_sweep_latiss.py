@@ -22,8 +22,7 @@
 __all__ = ["FocusSweepLatiss"]
 
 import yaml
-from lsst.ts.observatory.control.auxtel.atcs import ATCS
-from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
+from lsst.ts.observatory.control.auxtel import ATCS, LATISS, LATISSUsages
 from lsst.ts.standardscripts.base_focus_sweep import BaseFocusSweep
 
 
@@ -69,7 +68,10 @@ class FocusSweepLatiss(BaseFocusSweep):
         if self.latiss is None:
             self.log.debug("Creating Camera.")
             self.latiss = LATISS(
-                self.domain, intended_usage=LATISSUsages.TakeImage, log=self.log
+                self.domain,
+                intended_usage=LATISSUsages.TakeImageFull,
+                tcs_ready_to_take_data=self.atcs.ready_to_take_data,
+                log=self.log,
             )
             await self.latiss.start_task
         else:
@@ -78,8 +80,7 @@ class FocusSweepLatiss(BaseFocusSweep):
     @classmethod
     def get_schema(cls) -> dict:
         schema_dict = super().get_schema()
-        additional_properties = yaml.safe_load(
-            """
+        additional_properties = yaml.safe_load("""
             filter:
                 description: Filter name or ID; if omitted the filter is not changed.
                 anyOf:
@@ -96,8 +97,7 @@ class FocusSweepLatiss(BaseFocusSweep):
                     minimum: 1
                   - type: "null"
                 default: null
-        """
-        )
+        """)
         schema_dict["properties"].update(additional_properties)
         return schema_dict
 
@@ -116,8 +116,7 @@ class FocusSweepLatiss(BaseFocusSweep):
         self.config.focus_step_sequence = [
             step * 0.001 for step in self.config.focus_step_sequence  # Transform to mm
         ]
-        self.log.debug(
-            f"""Applying unit conversion from um to mm for ATHexapod use.
+        self.log.debug(f"""Applying unit conversion from um to mm for ATHexapod use.
 
         Original values in um from base class configuration are:
 
@@ -127,8 +126,7 @@ class FocusSweepLatiss(BaseFocusSweep):
         Converted values:
             focus_window = {self.config.focus_window} mm
             focus_step_sequence = {self.config.focus_step_sequence} mm
-        """
-        )
+        """)
 
     def get_instrument_configuration(self) -> dict:
         return dict(
