@@ -22,8 +22,7 @@
 __all__ = ["FocusSweepLatiss"]
 
 import yaml
-from lsst.ts.observatory.control.auxtel.atcs import ATCS
-from lsst.ts.observatory.control.auxtel.latiss import LATISS, LATISSUsages
+from lsst.ts.observatory.control.auxtel import ATCS, LATISS, LATISSUsages
 from lsst.ts.standardscripts.base_focus_sweep import BaseFocusSweep
 
 
@@ -69,7 +68,10 @@ class FocusSweepLatiss(BaseFocusSweep):
         if self.latiss is None:
             self.log.debug("Creating Camera.")
             self.latiss = LATISS(
-                self.domain, intended_usage=LATISSUsages.TakeImage, log=self.log
+                self.domain,
+                intended_usage=LATISSUsages.TakeImageFull,
+                tcs_ready_to_take_data=self.atcs.ready_to_take_data,
+                log=self.log,
             )
             await self.latiss.start_task
         else:
