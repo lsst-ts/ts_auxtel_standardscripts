@@ -8,6 +8,27 @@ Version History
 
 .. towncrier release notes start
 
+v0.4.0 (2026-06-22)
+===================
+
+New Features
+------------
+
+- Added vent gate and extraction fan control to ``PrepareForVent``, and added a vent gate close check to ``PrepareForOnSky``. (`OSW-1626 <https://rubinobs.atlassian.net/browse/OSW-1626>`_)
+
+
+Bug Fixes
+---------
+
+- In focus_sweep_latiss.py, updated LATISS usages. (`OSW-2389 <https://rubinobs.atlassian.net/browse/OSW-2389>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- In focus_sweep_latiss.py, fixed black formatting. (`OSW-1626 <https://rubinobs.atlassian.net/browse/OSW-1626>`_)
+
+
 v0.3.2 (2026-06-04)
 ===================
 
