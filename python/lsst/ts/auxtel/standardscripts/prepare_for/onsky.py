@@ -27,6 +27,9 @@ from lsst.ts.observatory.control.auxtel import ATCS, LATISS, ATCSUsages, LATISSU
 from lsst.ts.observatory.control.auxtel.atbuilding import ATBuilding, ATBuildingUsages
 from lsst.ts.xml.enums.ATBuilding import VentGateState
 
+# Index of the vent gate to check and close when preparing to go on sky.
+VENT_GATE_INDEX = 2
+
 
 class PrepareForOnSky(salobj.BaseScript):
     """Run ATTCS startup.
@@ -118,31 +121,26 @@ class PrepareForOnSky(salobj.BaseScript):
 
         await self.atcs.prepare_for_onsky()
 
-    async def close_vent_gates_if_open(self) -> None:
-        """Stop the extraction fan and close any open vent gates.
 
-        Reads the current ``ventGateState`` event and, if any gates are not
-        ``CLOSED``, stops the extraction fan first and then closes all open
-        gates.
-        """
-        vent_gate_state = await self.atbuilding.rem.atbuilding.evt_ventGateState.aget(
-            timeout=self.atbuilding.fast_timeout
-        )
+async def close_vent_gates_if_open(self) -> None:
+    """Stop the extraction fan and close the vent gate if open.
 
-        open_gates = [
-            i
-            for i, state in enumerate(vent_gate_state.state)
-            if VentGateState(state) != VentGateState.CLOSED
-        ]
+    Reads the current ``ventGateState`` event and, if gate index
+    ``VENT_GATE_INDEX`` is not ``CLOSED``, stops the extraction fan first
+    and then closes it.
+    """
+    vent_gate_state = await self.atbuilding.rem.atbuilding.evt_ventGateState.aget(
+        timeout=self.atbuilding.fast_timeout
+    )
 
-        if not open_gates:
-            self.log.info("All vent gates are already closed.")
-            return
+    if VentGateState(vent_gate_state.state[VENT_GATE_INDEX]) == VentGateState.CLOSED:
+        self.log.info("Vent gate is already closed.")
+        return
 
-        self.log.warning(
-            f"Vent gates {open_gates} are not closed. "
-            "Stopping extraction fan and closing gates."
-        )
+    self.log.warning(
+        f"Vent gate {VENT_GATE_INDEX} is not closed. "
+        "Stopping extraction fan and closing gate."
+    )
 
-        await self.atbuilding.stop_extraction_fan()
-        await self.atbuilding.close_vent_gates(open_gates)
+    await self.atbuilding.stop_extraction_fan()
+    await self.atbuilding.close_vent_gates([VENT_GATE_INDEX])
