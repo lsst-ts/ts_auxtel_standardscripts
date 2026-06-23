@@ -30,12 +30,13 @@ from astroplan import Observer
 from lsst.ts import salobj, utils
 from lsst.ts.observatory.control.auxtel.atbuilding import ATBuilding, ATBuildingUsages
 from lsst.ts.observatory.control.auxtel.atcs import ATCS, ATCSUsages
+from lsst.ts.xml.enums.ATBuilding import VentGateState
 
 # ESS SAL index for the outdoor weather station at the AuxTel site.
 ESS_INDEX = 301
 
 # Index of the vent gate to open when wind conditions allow.
-VENT_GATE_INDEX = 3
+VENT_GATE_INDEX = 2
 
 # Wind speed threshold (m/s) below which the vent gate and fan are activated.
 WIND_SPEED_THRESHOLD = 10.0
@@ -309,7 +310,11 @@ class PrepareForVent(salobj.BaseScript):
             f"at {FAN_TARGET_FREQUENCY} Hz."
         )
 
-        await self.atbuilding.open_vent_gates([VENT_GATE_INDEX])
+        await self.atbuilding.open_vent_gates(
+            [VENT_GATE_INDEX],
+            expected_state=VentGateState.PARTIALLY_OPEN,
+        )
+
         self._vent_gate_opened = True
 
         await self.atbuilding.start_extraction_fan(FAN_TARGET_FREQUENCY)
