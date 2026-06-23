@@ -71,6 +71,12 @@ class PrepareForOnSky(salobj.BaseScript):
                     type: array
                     items:
                         type: string
+                skip_vent_gates:
+                    description: >-
+                        If true, skip all vent gate and extraction fan
+                        operations.
+                    type: boolean
+                    default: false
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -96,6 +102,8 @@ class PrepareForOnSky(salobj.BaseScript):
             )
             await self.atbuilding.start_task
 
+        self.config = config
+
         if hasattr(config, "ignore"):
             self.atcs.disable_checks_for_components(components=config.ignore)
             self.latiss.disable_checks_for_components(components=config.ignore)
@@ -117,30 +125,37 @@ class PrepareForOnSky(salobj.BaseScript):
             reason="bias_ccd_clear",
         )
 
-        await self.close_vent_gates_if_open()
+        if self.config.skip_vent_gates:
+            self.log.info(
+                "skip_vent_gates=True; skipping vent gate and extraction fan."
+            )
+        else:
+            await self.close_vent_gates_if_open()
 
         await self.atcs.prepare_for_onsky()
 
+    async def close_vent_gates_if_open(self) -> None:
+        """Stop the extraction fan and close the vent gate if open.
 
-async def close_vent_gates_if_open(self) -> None:
-    """Stop the extraction fan and close the vent gate if open.
+        Reads the current ``ventGateState`` event and, if gate index
+        ``VENT_GATE_INDEX`` is not ``CLOSED``, stops the extraction fan first
+        and then closes it.
+        """
+        vent_gate_state = await self.atbuilding.rem.atbuilding.evt_ventGateState.aget(
+            timeout=self.atbuilding.fast_timeout
+        )
 
-    Reads the current ``ventGateState`` event and, if gate index
-    ``VENT_GATE_INDEX`` is not ``CLOSED``, stops the extraction fan first
-    and then closes it.
-    """
-    vent_gate_state = await self.atbuilding.rem.atbuilding.evt_ventGateState.aget(
-        timeout=self.atbuilding.fast_timeout
-    )
+        if (
+            VentGateState(vent_gate_state.state[VENT_GATE_INDEX])
+            == VentGateState.CLOSED
+        ):
+            self.log.info("Vent gate is already closed.")
+            return
 
-    if VentGateState(vent_gate_state.state[VENT_GATE_INDEX]) == VentGateState.CLOSED:
-        self.log.info("Vent gate is already closed.")
-        return
+        self.log.warning(
+            f"Vent gate {VENT_GATE_INDEX} is not closed. "
+            "Stopping extraction fan and closing gate."
+        )
 
-    self.log.warning(
-        f"Vent gate {VENT_GATE_INDEX} is not closed. "
-        "Stopping extraction fan and closing gate."
-    )
-
-    await self.atbuilding.stop_extraction_fan()
-    await self.atbuilding.close_vent_gates([VENT_GATE_INDEX])
+        await self.atbuilding.stop_extraction_fan()
+        await self.atbuilding.close_vent_gates([VENT_GATE_INDEX])
