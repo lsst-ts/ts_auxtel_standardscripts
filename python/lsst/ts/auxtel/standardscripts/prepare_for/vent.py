@@ -128,6 +128,12 @@ class PrepareForVent(salobj.BaseScript):
                         Stop venting when sun reaches this altitude.
                     type: number
                     default: 0.0
+                skip_vent_gates:
+                    description: >-
+                        If true, skip all vent gate and extraction fan
+                        operations.
+                    type: boolean
+                    default: false
             additionalProperties: false
         """
         return yaml.safe_load(schema_yaml)
@@ -150,7 +156,12 @@ class PrepareForVent(salobj.BaseScript):
 
         await self.prepare_for_vent()
 
-        await self._open_vent_and_fan()
+        if self.config.skip_vent_gates:
+            self.log.info(
+                "skip_vent_gates=True; skipping vent gate and extraction fan."
+            )
+        else:
+            await self._open_vent_and_fan()
 
         self.log.info(f"Venting until sun reaches {self.config.end_at_sun_elevation}.")
 
