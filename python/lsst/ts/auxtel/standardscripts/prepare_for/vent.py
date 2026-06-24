@@ -42,7 +42,7 @@ VENT_GATE_INDEX = 2
 WIND_SPEED_THRESHOLD = 10.0
 
 # Rolling window (s) over which to average wind speed.
-WIND_AVERAGE_WINDOW = 600.0
+WIND_AVERAGE_WINDOW = 300.0
 
 # Extraction fan drive frequency (Hz) to use when venting.
 FAN_TARGET_FREQUENCY = 20
