@@ -32,6 +32,7 @@ from lsst.ts.auxtel.standardscripts.prepare_for.vent import (
     WIND_SPEED_THRESHOLD,
 )
 from lsst.ts.observatory.control.mock import ATCSMock
+from lsst.ts.xml.enums.ATBuilding import VentGateState
 
 
 class TestPrepareForOnSky(
@@ -216,7 +217,8 @@ class TestPrepareForOnSky(
             await self.script._open_vent_and_fan()
 
             self.script.atbuilding.open_vent_gates.assert_awaited_once_with(
-                [VENT_GATE_INDEX]
+                [VENT_GATE_INDEX],
+                expected_state=VentGateState.PARTIALLY_OPEN,
             )
             self.script.atbuilding.start_extraction_fan.assert_awaited_once_with(
                 FAN_TARGET_FREQUENCY
