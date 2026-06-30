@@ -8,6 +8,19 @@ Version History
 
 .. towncrier release notes start
 
+v0.4.1 (2026-06-30)
+===================
+
+New Features
+------------
+
+- In prepare_for/onsky.py made vent gate features configurable with skip_vent_gates property. (`OSW-1626 <https://rubinobs.atlassian.net/browse/OSW-1626>`_)
+- In prepare_for/vent.py:
+  - Updated vent gate index and included PARTIALLY_OPEN as acceptable vent gate status
+  - Made vent gate features configurable with skip_vent_gates property.
+  - Reduce window for wind speed average to 300s. (`OSW-1626 <https://rubinobs.atlassian.net/browse/OSW-1626>`_)
+
+
 v0.4.0 (2026-06-22)
 ===================
 

@@ -1,1 +1,0 @@
-In prepare_for/onsky.py made vent gate features configurable with skip_vent_gates property.
